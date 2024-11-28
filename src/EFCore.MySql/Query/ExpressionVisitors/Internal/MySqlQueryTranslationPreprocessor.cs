@@ -30,7 +30,7 @@ public class MySqlQueryTranslationPreprocessor : RelationalQueryTranslationPrepr
 
         // Implementation of base.base (QueryTranslationPreprocessor), using `MySqlQueryableMethodNormalizingExpressionVisitor` instead of
         // `QueryableMethodNormalizingExpressionVisitor` directly.
-        expression = new MySqlQueryableMethodNormalizingExpressionVisitor(QueryCompilationContext).Normalize(expression);
+        expression = new MySqlQueryableMethodNormalizingExpressionVisitor(QueryCompilationContext, false).Normalize(expression);
         expression = ProcessQueryRoots(expression);
 
         return expression;

@@ -244,7 +244,7 @@ namespace Pomelo.EntityFrameworkCore.MySql.Query.ExpressionVisitors.Internal
 
             return changed
                 ? selectExpression.Update(
-                    projections, tables, predicate, groupBy, havingExpression, orderings, limit, offset)
+                    tables, predicate, groupBy, havingExpression, projections, orderings, limit, offset)
                 : selectExpression;
         }
 

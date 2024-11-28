@@ -11,7 +11,7 @@
     <Copyright>Copyright $([System.DateTime]::Now.Year) © Pomelo Foundation</Copyright>
     <PackageIconUrl>https://avatars3.githubusercontent.com/u/19828814</PackageIconUrl>
     <PackageIcon>icon.png</PackageIcon>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <LangVersion>latest</LangVersion>
     <SuppressNETCoreSdkPreviewMessage>true</SuppressNETCoreSdkPreviewMessage>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>

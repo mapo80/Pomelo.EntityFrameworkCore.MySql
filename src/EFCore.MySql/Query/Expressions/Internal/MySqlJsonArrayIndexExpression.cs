@@ -3,10 +3,14 @@
 
 using System;
 using System.Linq.Expressions;
+using System.Reflection;
+using System.Text.RegularExpressions;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using Microsoft.EntityFrameworkCore.Storage;
+
+#pragma warning disable EF9100
 
 namespace Pomelo.EntityFrameworkCore.MySql.Query.Expressions.Internal
 {
@@ -15,6 +19,9 @@ namespace Pomelo.EntityFrameworkCore.MySql.Query.Expressions.Internal
     /// </summary>
     public class MySqlJsonArrayIndexExpression : SqlExpression, IEquatable<MySqlJsonArrayIndexExpression>
     {
+
+        private static ConstructorInfo _quotingConstructor;
+
         [NotNull]
         public virtual SqlExpression Expression { get; }
 
@@ -29,6 +36,14 @@ namespace Pomelo.EntityFrameworkCore.MySql.Query.Expressions.Internal
 
         protected override Expression VisitChildren(ExpressionVisitor visitor)
             => Update((SqlExpression)visitor.Visit(Expression));
+
+        /// <inheritdoc />
+        public override Expression Quote()
+            => New(
+                _quotingConstructor ??= typeof(MySqlRegexpExpression).GetConstructor(
+                    [typeof(SqlExpression), typeof(SqlExpression), typeof(RelationalTypeMapping)])!,
+                Expression.Quote(),
+                RelationalExpressionQuotingUtilities.QuoteTypeMapping(TypeMapping));
 
         public virtual MySqlJsonArrayIndexExpression Update(
             [NotNull] SqlExpression expression)

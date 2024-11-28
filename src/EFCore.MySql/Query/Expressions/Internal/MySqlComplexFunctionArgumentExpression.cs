@@ -9,11 +9,18 @@ using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.EntityFrameworkCore.Storage;
 using Pomelo.EntityFrameworkCore.MySql.Query.ExpressionVisitors.Internal;
+using System.Reflection;
+using System.IO;
+
+#pragma warning disable EF9100
 
 namespace Pomelo.EntityFrameworkCore.MySql.Query.Expressions.Internal
 {
     public class MySqlComplexFunctionArgumentExpression : SqlExpression
     {
+
+        private static ConstructorInfo _quotingConstructor;
+
         public MySqlComplexFunctionArgumentExpression(
             IEnumerable<SqlExpression> argumentParts,
             string delimiter,
@@ -51,6 +58,17 @@ namespace Pomelo.EntityFrameworkCore.MySql.Query.Expressions.Internal
 
             return Update(argumentParts, Delimiter);
         }
+
+        /// <inheritdoc />
+        public override Expression Quote()
+            => New(
+                _quotingConstructor ??= typeof(MySqlRegexpExpression).GetConstructor(
+                    [typeof(SqlExpression), typeof(SqlExpression), typeof(RelationalTypeMapping)])!,
+                ArgumentParts is null
+                ? Constant(null, typeof(IReadOnlyList<SqlExpression>))
+                : NewArrayInit(typeof(SqlExpression), ArgumentParts.Select(s => s.Quote())),
+                Constant(Delimiter),
+                RelationalExpressionQuotingUtilities.QuoteTypeMapping(TypeMapping));
 
         public virtual MySqlComplexFunctionArgumentExpression Update(IReadOnlyList<SqlExpression> argumentParts, string delimiter)
             => !argumentParts.SequenceEqual(ArgumentParts)

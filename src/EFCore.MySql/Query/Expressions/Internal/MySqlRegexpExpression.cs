@@ -8,11 +8,21 @@ using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.EntityFrameworkCore.Storage;
 using Pomelo.EntityFrameworkCore.MySql.Query.ExpressionVisitors.Internal;
+using System.Collections.Generic;
+using System.IO;
+using System;
+using System.Data.SqlTypes;
+using System.Xml.Linq;
+using System.Reflection;
+
+#pragma warning disable EF9100
 
 namespace Pomelo.EntityFrameworkCore.MySql.Query.Expressions.Internal
 {
     public class MySqlRegexpExpression : SqlExpression
     {
+        private static ConstructorInfo _quotingConstructor;
+
         public MySqlRegexpExpression(
             [NotNull] SqlExpression match,
             [NotNull] SqlExpression pattern,
@@ -86,5 +96,14 @@ namespace Pomelo.EntityFrameworkCore.MySql.Query.Expressions.Internal
 
         protected override void Print(ExpressionPrinter expressionPrinter)
             => expressionPrinter.Append(ToString());
+
+        /// <inheritdoc />
+        public override Expression Quote()
+            => New(
+                _quotingConstructor ??= typeof(MySqlRegexpExpression).GetConstructor(
+                    [typeof(SqlExpression), typeof(SqlExpression), typeof(RelationalTypeMapping)])!,
+                Match.Quote(),
+                Pattern.Quote(),
+                RelationalExpressionQuotingUtilities.QuoteTypeMapping(TypeMapping));
     }
 }

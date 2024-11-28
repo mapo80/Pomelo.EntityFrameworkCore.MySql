@@ -3,14 +3,20 @@
 
 using System;
 using System.Linq.Expressions;
+using System.Reflection;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.EntityFrameworkCore.Utilities;
 
 namespace Pomelo.EntityFrameworkCore.MySql.Query.Expressions.Internal;
 
+#pragma warning disable EF9100
+
 public class MySqlInlinedParameterExpression : SqlExpression
 {
+    private static ConstructorInfo _quotingConstructor;
+
     public MySqlInlinedParameterExpression(
         SqlParameterExpression parameterExpression,
         SqlConstantExpression valueExpression)
@@ -32,6 +38,16 @@ public class MySqlInlinedParameterExpression : SqlExpression
 
         return Update(parameterExpression, valueExpression);
     }
+
+    /// <inheritdoc />
+    public override Expression Quote()
+        => New(
+            _quotingConstructor ??= typeof(MySqlRegexpExpression).GetConstructor(
+                [typeof(SqlExpression), typeof(SqlExpression), typeof(RelationalTypeMapping)])!,
+            ((SqlParameterExpression)ParameterExpression).Quote(),
+            ValueExpression.Quote(),
+            RelationalExpressionQuotingUtilities.QuoteTypeMapping(TypeMapping));
+
 
     protected override void Print(ExpressionPrinter expressionPrinter)
     {

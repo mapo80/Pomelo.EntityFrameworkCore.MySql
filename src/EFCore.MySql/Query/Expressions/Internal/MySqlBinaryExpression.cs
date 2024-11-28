@@ -3,11 +3,14 @@
 
 using System;
 using System.Linq.Expressions;
+using System.Reflection;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.EntityFrameworkCore.Utilities;
 using Pomelo.EntityFrameworkCore.MySql.Query.ExpressionVisitors.Internal;
+
+#pragma warning disable EF9100
 
 namespace Pomelo.EntityFrameworkCore.MySql.Query.Expressions.Internal
 {
@@ -27,6 +30,9 @@ namespace Pomelo.EntityFrameworkCore.MySql.Query.Expressions.Internal
 
     public class MySqlBinaryExpression : SqlExpression
     {
+
+        private static ConstructorInfo _quotingConstructor;
+
         public MySqlBinaryExpression(
             MySqlBinaryExpressionOperatorType operatorType,
             SqlExpression left,
@@ -47,6 +53,7 @@ namespace Pomelo.EntityFrameworkCore.MySql.Query.Expressions.Internal
         public virtual MySqlBinaryExpressionOperatorType OperatorType { get; }
         public virtual SqlExpression Left { get; }
         public virtual SqlExpression Right { get; }
+        public static ConstructorInfo QuotingConstructor { get => _quotingConstructor; set => _quotingConstructor = value; }
 
         protected override Expression Accept(ExpressionVisitor visitor)
             => visitor is MySqlQuerySqlGenerator mySqlQuerySqlGenerator // TODO: Move to VisitExtensions
@@ -60,6 +67,16 @@ namespace Pomelo.EntityFrameworkCore.MySql.Query.Expressions.Internal
 
             return Update(left, right);
         }
+
+        /// <inheritdoc />
+        public override Expression Quote()
+            => New(
+                _quotingConstructor ??= typeof(MySqlRegexpExpression).GetConstructor(
+                    [typeof(SqlExpression), typeof(SqlExpression), typeof(RelationalTypeMapping)])!,
+                Constant(OperatorType),
+                Left.Quote(),
+                Right.Quote(),
+                RelationalExpressionQuotingUtilities.QuoteTypeMapping(TypeMapping));
 
         public virtual MySqlBinaryExpression Update(SqlExpression left, SqlExpression right)
             => left != Left || right != Right

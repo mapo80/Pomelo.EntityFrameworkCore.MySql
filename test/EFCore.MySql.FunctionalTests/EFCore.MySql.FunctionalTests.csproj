@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>$(PomeloTestTargetFramework)</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <AssemblyName>Pomelo.EntityFrameworkCore.MySql.FunctionalTests</AssemblyName>
     <RootNamespace>Pomelo.EntityFrameworkCore.MySql.FunctionalTests</RootNamespace>
     <PreserveCompilationContext>true</PreserveCompilationContext>

@@ -10,17 +10,25 @@ namespace Pomelo.EntityFrameworkCore.MySql.Query.Internal
     public class MySqlParameterBasedSqlProcessorFactory : IRelationalParameterBasedSqlProcessorFactory
     {
         private readonly RelationalParameterBasedSqlProcessorDependencies _dependencies;
+        private readonly RelationalParameterBasedSqlProcessorParameters _parameters;
         [NotNull] private readonly IMySqlOptions _options;
 
         public MySqlParameterBasedSqlProcessorFactory(
             [NotNull] RelationalParameterBasedSqlProcessorDependencies dependencies,
+            [NotNull] RelationalParameterBasedSqlProcessorParameters parameters,
             [NotNull] IMySqlOptions options)
         {
             _dependencies = dependencies;
+            _parameters = parameters;
             _options = options;
         }
 
         public virtual RelationalParameterBasedSqlProcessor Create(bool useRelationalNulls)
-            => new MySqlParameterBasedSqlProcessor(_dependencies, useRelationalNulls, _options);
+            => new MySqlParameterBasedSqlProcessor(_dependencies, _parameters, _options);
+
+        public RelationalParameterBasedSqlProcessor Create(RelationalParameterBasedSqlProcessorParameters parameters)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

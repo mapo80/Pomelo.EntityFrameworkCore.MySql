@@ -5,10 +5,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
+using System.Text.RegularExpressions;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using Microsoft.EntityFrameworkCore.Storage;
+
+#pragma warning disable EF9100
 
 namespace Pomelo.EntityFrameworkCore.MySql.Query.Expressions.Internal
 {
@@ -17,6 +21,8 @@ namespace Pomelo.EntityFrameworkCore.MySql.Query.Expressions.Internal
     /// </summary>
     public class MySqlJsonTraversalExpression : SqlExpression, IEquatable<MySqlJsonTraversalExpression>
     {
+        private static ConstructorInfo _quotingConstructor;
+
         /// <summary>
         /// The JSON column.
         /// </summary>
@@ -66,6 +72,18 @@ namespace Pomelo.EntityFrameworkCore.MySql.Query.Expressions.Internal
             => Update(
                 (SqlExpression)visitor.Visit(Expression),
                 Path.Select(p => (SqlExpression)visitor.Visit(p)).ToArray());
+
+        /// <inheritdoc />
+        public override Expression Quote()
+            => New(
+                _quotingConstructor ??= typeof(MySqlRegexpExpression).GetConstructor(
+                    [typeof(SqlExpression), typeof(SqlExpression), typeof(RelationalTypeMapping)])!,
+                Expression.Quote(),
+                Path is null
+                ? Constant(null, typeof(IReadOnlyList<SqlExpression>))
+                : NewArrayInit(typeof(SqlExpression), Path.Select(s => s.Quote())),
+                Constant(ReturnsText),
+                RelationalExpressionQuotingUtilities.QuoteTypeMapping(TypeMapping));
 
         public virtual MySqlJsonTraversalExpression Update(
             [NotNull] SqlExpression expression,

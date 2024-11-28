@@ -2,11 +2,15 @@
 // Licensed under the MIT. See LICENSE in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.Linq.Expressions;
+using System.Reflection;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using Microsoft.EntityFrameworkCore.Storage;
+
+#pragma warning disable EF9100
 
 namespace Pomelo.EntityFrameworkCore.MySql.Query.Expressions.Internal
 {
@@ -15,6 +19,8 @@ namespace Pomelo.EntityFrameworkCore.MySql.Query.Expressions.Internal
     /// </summary>
     public class MySqlColumnAliasReferenceExpression : SqlExpression, IEquatable<MySqlColumnAliasReferenceExpression>
     {
+        private static ConstructorInfo _quotingConstructor;
+
         [NotNull]
         public virtual string Alias { get; }
 
@@ -34,6 +40,15 @@ namespace Pomelo.EntityFrameworkCore.MySql.Query.Expressions.Internal
 
         protected override Expression VisitChildren(ExpressionVisitor visitor)
             => this;
+
+        /// <inheritdoc />
+        public override Expression Quote()
+            => New(
+                _quotingConstructor ??= typeof(MySqlRegexpExpression).GetConstructor(
+                    [typeof(SqlExpression), typeof(SqlExpression), typeof(RelationalTypeMapping)])!,
+                Constant(Alias),
+                Expression.Quote(),
+                RelationalExpressionQuotingUtilities.QuoteTypeMapping(TypeMapping));
 
         public virtual MySqlColumnAliasReferenceExpression Update(
             [NotNull] string alias,

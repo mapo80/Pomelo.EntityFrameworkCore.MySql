@@ -2,6 +2,7 @@
 // Licensed under the MIT. See LICENSE in the project root for license information.
 
 using System;
+using System.Linq.Expressions;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore.Storage.Json;
 
@@ -20,4 +21,6 @@ public sealed class MySqlJsonByteArrayAsHexStringReaderWriter : JsonValueReaderW
 
     public override void ToJsonTyped(Utf8JsonWriter writer, byte[] value)
         => writer.WriteStringValue(Convert.ToHexString(value));
+
+    public override Expression ConstructorExpression { get; }
 }

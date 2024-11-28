@@ -4,6 +4,8 @@
 using System;
 using System.Linq;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -26,6 +28,16 @@ namespace Pomelo.EntityFrameworkCore.MySql.Migrations.Internal
             : base(dependencies)
         {
             _sqlGenerationHelper = (MySqlSqlGenerationHelper)dependencies.SqlGenerationHelper;
+        }
+
+        public override IMigrationsDatabaseLock AcquireDatabaseLock()
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Task<IMigrationsDatabaseLock> AcquireDatabaseLockAsync(CancellationToken cancellationToken = new CancellationToken())
+        {
+            throw new NotImplementedException();
         }
 
         protected override void ConfigureTable([NotNull] EntityTypeBuilder<HistoryRow> history)
@@ -107,6 +119,8 @@ DELIMITER ;
 CALL {MigrationsScript}();
 DROP PROCEDURE {MigrationsScript};
 ";
+
+        public override LockReleaseBehavior LockReleaseBehavior { get; }
 
         public virtual void ConfigureModel(ModelBuilder modelBuilder)
             => modelBuilder.HasCharSet(null, DelegationModes.ApplyToDatabases);

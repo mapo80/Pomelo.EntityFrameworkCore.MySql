@@ -4,11 +4,14 @@
 using System;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using Microsoft.EntityFrameworkCore.Storage;
 using Pomelo.EntityFrameworkCore.MySql.Query.ExpressionVisitors.Internal;
+
+#pragma warning disable EF9100
 
 namespace Pomelo.EntityFrameworkCore.MySql.Query.Expressions.Internal
 {
@@ -17,6 +20,8 @@ namespace Pomelo.EntityFrameworkCore.MySql.Query.Expressions.Internal
     /// </summary>
     public class MySqlCollateExpression : SqlExpression
     {
+        private static ConstructorInfo _quotingConstructor;
+
         private readonly SqlExpression _valueExpression;
         private readonly string _charset;
         private readonly string _collation;
@@ -76,6 +81,16 @@ namespace Pomelo.EntityFrameworkCore.MySql.Query.Expressions.Internal
 
             return Update(valueExpression);
         }
+
+        /// <inheritdoc />
+        public override Expression Quote()
+            => New(
+                _quotingConstructor ??= typeof(MySqlRegexpExpression).GetConstructor(
+                    [typeof(SqlExpression), typeof(SqlExpression), typeof(RelationalTypeMapping)])!,
+                ValueExpression.Quote(),
+                Constant(Charset),
+                Constant(Collation),
+                RelationalExpressionQuotingUtilities.QuoteTypeMapping(TypeMapping));
 
         public virtual MySqlCollateExpression Update(SqlExpression valueExpression)
             => valueExpression != _valueExpression &&

@@ -17,8 +17,8 @@ namespace Pomelo.EntityFrameworkCore.MySql.Query.ExpressionVisitors.Internal;
 /// </summary>
 public class MySqlQueryableMethodNormalizingExpressionVisitor : QueryableMethodNormalizingExpressionVisitor
 {
-    public MySqlQueryableMethodNormalizingExpressionVisitor(QueryCompilationContext queryCompilationContext)
-        : base(queryCompilationContext)
+    public MySqlQueryableMethodNormalizingExpressionVisitor(QueryCompilationContext queryCompilationContext, bool isEfConstantSupported)
+        : base(queryCompilationContext, isEfConstantSupported)
     {
     }
 

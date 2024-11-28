@@ -64,7 +64,7 @@ namespace Pomelo.EntityFrameworkCore.MySql.Migrations.Internal
                 modelRuntimeInitializer,
                 logger,
                 commandLogger,
-                databaseProvider)
+                databaseProvider,null, null, null, null)
         {
             _migrationsAssembly = migrationsAssembly;
             _rawSqlCommandBuilder = rawSqlCommandBuilder;
@@ -145,13 +145,11 @@ namespace Pomelo.EntityFrameworkCore.MySql.Migrations.Internal
             PopulateMigrations(
                 appliedMigrations,
                 toMigration,
-                out var migrationsToApply,
-                out var migrationsToRevert,
-                out var actualTargetMigration);
+                out var migratorData);
 
-            return migrationsToApply
+            return migratorData.AppliedMigrations
                 .SelectMany(x => x.UpOperations)
-                .Concat(migrationsToRevert.SelectMany(x => x.DownOperations))
+                .Concat(migratorData.RevertedMigrations.SelectMany(x => x.DownOperations))
                 .ToList();
         }
 
