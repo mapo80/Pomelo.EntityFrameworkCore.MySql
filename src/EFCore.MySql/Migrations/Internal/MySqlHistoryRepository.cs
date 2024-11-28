@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions;
@@ -30,14 +31,37 @@ namespace Pomelo.EntityFrameworkCore.MySql.Migrations.Internal
             _sqlGenerationHelper = (MySqlSqlGenerationHelper)dependencies.SqlGenerationHelper;
         }
 
+        /// <summary>
+        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+        ///     any release. You should only use it directly in your code with extreme caution and knowing that
+        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+        /// </summary>
         public override IMigrationsDatabaseLock AcquireDatabaseLock()
         {
-            throw new NotImplementedException();
+            Dependencies.MigrationsLogger.AcquiringMigrationLock();
+
+            Dependencies.RawSqlCommandBuilder
+                .Build($"LOCK TABLES {Dependencies.SqlGenerationHelper.DelimitIdentifier(TableName, TableSchema)} WRITE;")
+                .ExecuteNonQuery(new RelationalCommandParameterObject());
+
+            return new MySqlMigrationDatabaseLock(this);
         }
 
-        public override Task<IMigrationsDatabaseLock> AcquireDatabaseLockAsync(CancellationToken cancellationToken = new CancellationToken())
+        /// <summary>
+        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+        ///     any release. You should only use it directly in your code with extreme caution and knowing that
+        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+        /// </summary>
+        public override async Task<IMigrationsDatabaseLock> AcquireDatabaseLockAsync(CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            await Dependencies.RawSqlCommandBuilder
+                .Build($"LOCK TABLES {Dependencies.SqlGenerationHelper.DelimitIdentifier(TableName, TableSchema)} WRITE;")
+                .ExecuteNonQueryAsync(new RelationalCommandParameterObject(), cancellationToken)
+                .ConfigureAwait(false);
+
+            return new MySqlMigrationDatabaseLock(this);
         }
 
         protected override void ConfigureTable([NotNull] EntityTypeBuilder<HistoryRow> history)
@@ -189,5 +213,23 @@ DROP PROCEDURE {MigrationsScript};
                 .GetColumnName();
 
         #endregion Necessary implementation because we cannot directly override EnsureModel
+
+        private sealed class MySqlMigrationDatabaseLock(IHistoryRepository historyRepository) : IMigrationsDatabaseLock
+        {
+            /// <summary>
+            ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+            ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+            ///     any release. You should only use it directly in your code with extreme caution and knowing that
+            ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+            /// </summary>
+            public IHistoryRepository HistoryRepository => historyRepository;
+
+            public void Dispose()
+            {
+            }
+
+            public ValueTask DisposeAsync()
+                => default;
+        }
     }
 }
